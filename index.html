@@ -28,75 +28,8 @@
     line-height: 1.7;
   }
 
-  /* ── PASSWORD GATE ─────────────────────────────────────── */
-  #gate {
-    position: fixed; inset: 0; z-index: 9999;
-    background: linear-gradient(135deg, var(--navy2) 0%, var(--navy) 50%, #243874 100%);
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 0;
-  }
-  .gate-card {
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 20px;
-    padding: 52px 48px;
-    width: 420px;
-    max-width: 92vw;
-    text-align: center;
-    backdrop-filter: blur(12px);
-  }
-  .gate-initials {
-    width: 72px; height: 72px; border-radius: 50%;
-    background: var(--gold);
-    color: var(--navy);
-    font-size: 26px; font-weight: 800;
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 20px;
-    box-shadow: 0 4px 24px rgba(232,160,32,0.4);
-  }
-  .gate-name {
-    color: #fff; font-size: 22px; font-weight: 700; margin-bottom: 4px;
-  }
-  .gate-role {
-    color: rgba(255,255,255,0.6); font-size: 13px; margin-bottom: 32px;
-    letter-spacing: 0.04em; text-transform: uppercase;
-  }
-  .gate-label {
-    color: rgba(255,255,255,0.7); font-size: 13px; text-align: left;
-    display: block; margin-bottom: 8px;
-  }
-  .gate-input {
-    width: 100%; padding: 14px 18px;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 10px;
-    color: #fff; font-size: 16px;
-    outline: none; transition: border 0.2s;
-    letter-spacing: 0.08em;
-  }
-  .gate-input:focus { border-color: var(--gold); }
-  .gate-input::placeholder { color: rgba(255,255,255,0.3); letter-spacing: normal; }
-  .gate-btn {
-    width: 100%; margin-top: 16px;
-    padding: 14px;
-    background: var(--gold);
-    color: var(--navy);
-    font-size: 15px; font-weight: 700;
-    border: none; border-radius: 10px;
-    cursor: pointer; transition: opacity 0.2s, transform 0.1s;
-  }
-  .gate-btn:hover { opacity: 0.92; }
-  .gate-btn:active { transform: scale(0.98); }
-  .gate-error {
-    color: #ff7b7b; font-size: 13px; margin-top: 12px;
-    display: none;
-  }
-  .gate-footer {
-    color: rgba(255,255,255,0.3); font-size: 12px; margin-top: 24px;
-  }
-
   /* ── MAIN PORTFOLIO ────────────────────────────────────── */
-  #portfolio { display: none; }
+  #portfolio { display: block; }
 
   /* Top nav */
   .topnav {
@@ -324,22 +257,6 @@
 </style>
 </head>
 <body>
-
-<!-- ════════════════════════════════════════════════════════
-     PASSWORD GATE
-═════════════════════════════════════════════════════════ -->
-<div id="gate">
-  <div class="gate-card">
-    <div class="gate-initials">SM</div>
-    <div class="gate-name">Shekhar Muni</div>
-    <div class="gate-role">Sr. Director, Engineering &nbsp;·&nbsp; Engineering Leadership Portfolio</div>
-    <label class="gate-label">Enter portfolio password to continue</label>
-    <input id="gate-pw" class="gate-input" type="password" placeholder="Password" autocomplete="current-password"/>
-    <button class="gate-btn" onclick="unlock()">View Portfolio &rarr;</button>
-    <div class="gate-error" id="gate-err">Incorrect password. Please try again.</div>
-    <div class="gate-footer">This portfolio is confidential and shared for recruiting purposes only.</div>
-  </div>
-</div>
 
 <!-- ════════════════════════════════════════════════════════
      MAIN PORTFOLIO
@@ -877,7 +794,8 @@
             in enterprise contexts.</p>
             <br/>
             <p>This is the type of platform engineering challenge I am most excited to work on —
-            and it maps directly to where I believe Zendesk&rsquo;s platform strategy is headed.</p>
+            and it represents the next frontier for any company serious about building a defensible
+            data and API platform.</p>
           </div>
           <div class="tag-list" style="margin-top:16px;">
             <span class="tag purple">Agentic AI</span>
@@ -919,39 +837,13 @@
 
   <div class="footer">
     <strong>Chandrashekhar (Shekhar) Muni</strong> &nbsp;&middot;&nbsp;
-    Director, Software Engineering Portfolio &nbsp;&middot;&nbsp;
-    <a href="mailto:emcshekhar@gmail.com">emcshekhar@gmail.com</a> &nbsp;&middot;&nbsp;
-    This document is confidential and shared for recruiting purposes only.
+    Sr. Director, Engineering &nbsp;&middot;&nbsp; Engineering Leadership Portfolio &nbsp;&middot;&nbsp;
+    <a href="mailto:emcshekhar@gmail.com">emcshekhar@gmail.com</a>
   </div>
 
 </div><!-- /portfolio -->
 
 <script>
-  function unlock() {
-    const pw = document.getElementById('gate-pw').value;
-    const err = document.getElementById('gate-err');
-    if (pw === 'Trinetra@n0807') {
-      document.getElementById('gate').style.display = 'none';
-      document.getElementById('portfolio').style.display = 'block';
-      document.getElementById('portfolio').style.opacity = '0';
-      setTimeout(() => {
-        document.getElementById('portfolio').style.transition = 'opacity 0.5s';
-        document.getElementById('portfolio').style.opacity = '1';
-      }, 10);
-    } else {
-      err.style.display = 'block';
-      document.getElementById('gate-pw').style.borderColor = '#ff7b7b';
-      setTimeout(() => {
-        err.style.display = 'none';
-        document.getElementById('gate-pw').style.borderColor = '';
-      }, 3000);
-    }
-  }
-
-  document.getElementById('gate-pw').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') unlock();
-  });
-
   // Smooth scroll for nav links
   document.querySelectorAll('a[href^="#"]').forEach(a => {
     a.addEventListener('click', e => {
