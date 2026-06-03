@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Pipeline Architecture — Shekhar Muni</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #21262d;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --blue: #58a6ff;
+    --teal: #39d353;
+    --purple: #bc8cff;
+    --amber: #e3b341;
+    --red: #f85149;
+    --blue-bg: #0d2044;
+    --teal-bg: #0a2218;
+    --purple-bg: #1c1040;
+    --amber-bg: #2a1f00;
+    --gray-bg: #161b22;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  header {
+    max-width: 900px;
+    margin: 0 auto 48px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 24px;
+  }
+
+  header h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--blue);
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  header p {
+    font-size: 13px;
+    color: var(--text2);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .layout {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 32px;
+    align-items: start;
+  }
+
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--text2);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    margin-top: 28px;
+  }
+
+  .section-label:first-child { margin-top: 0; }
+
+  .node {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+    margin-bottom: 2px;
+  }
+
+  .node:hover {
+    border-color: var(--active-color, var(--blue));
+    background: var(--active-bg, var(--bg3));
+    transform: translateX(3px);
+  }
+
+  .node.active {
+    border-color: var(--active-color, var(--blue));
+    background: var(--active-bg, var(--bg3));
+    transform: translateX(3px);
+  }
+
+  .node.active::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--active-color, var(--blue));
+    border-radius: 8px 0 0 8px;
+  }
+
+  .node-blue   { --active-color: var(--blue);   --active-bg: var(--blue-bg); }
+  .node-teal   { --active-color: var(--teal);   --active-bg: var(--teal-bg); }
+  .node-purple { --active-color: var(--purple); --active-bg: var(--purple-bg); }
+  .node-amber  { --active-color: var(--amber);  --active-bg: var(--amber-bg); }
+  .node-gray   { --active-color: var(--text2);  --active-bg: var(--bg3); }
+
+  .node-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .node-title .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--active-color, var(--text2));
+    flex-shrink: 0;
+  }
+
+  .node-sub {
+    font-size: 12px;
+    color: var(--text2);
+    font-family: 'IBM Plex Mono', monospace;
+    margin-left: 15px;
+  }
+
+  .connector {
+    display: flex;
+    align-items: center;
+    padding: 3px 0 3px 21px;
+    color: var(--border);
+    font-size: 18px;
+  }
+
+  .quality-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .quality-node {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    position: relative;
+  }
+
+  .quality-node:hover, .quality-node.active {
+    border-color: var(--active-color);
+    background: var(--active-bg);
+  }
+
+  .quality-node.active::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 0; right: 0;
+    height: 3px;
+    background: var(--active-color);
+    border-radius: 8px 8px 0 0;
+  }
+
+  .q-label {
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    color: var(--active-color, var(--text2));
+  }
+
+  .q-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+
+  .q-sub {
+    font-size: 11px;
+    color: var(--text2);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* Detail panel */
+  .detail-panel {
+    position: sticky;
+    top: 40px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .detail-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+
+  .detail-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--active-color, var(--text2));
+    margin-bottom: 6px;
+  }
+
+  .detail-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .detail-body {
+    padding: 20px;
+  }
+
+  .detail-body p {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text2);
+    margin-bottom: 14px;
+  }
+
+  .detail-body p:last-child { margin-bottom: 0; }
+
+  .detail-body strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .detail-body .metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg3);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+  }
+
+  .metric-label { color: var(--text2); }
+  .metric-value { color: var(--teal); font-weight: 600; }
+
+  .empty-state {
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .empty-state p {
+    font-size: 13px;
+    color: var(--text2);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .empty-state .arrow {
+    font-size: 24px;
+    color: var(--border);
+    display: block;
+    margin-bottom: 12px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  footer {
+    max-width: 900px;
+    margin: 48px auto 0;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text2);
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>rag-production / architecture</h1>
+  <p>github.com/shekhar-muni/rag-production &nbsp;·&nbsp; click any component to see details</p>
+</header>
+
+<div class="layout">
+  <div class="pipeline">
+
+    <div class="section-label">Input</div>
+
+    <div class="node node-gray" onclick="show('docs')">
+      <div class="node-title"><span class="dot"></span>Your documents</div>
+      <div class="node-sub">PDF · Markdown · web pages</div>
+    </div>
+
+    <div class="connector">↓</div>
+
+    <div class="section-label">Ingestion layer</div>
+
+    <div class="node node-teal" onclick="show('chunker')">
+      <div class="node-title"><span class="dot"></span>Chunker</div>
+      <div class="node-sub">ingestion/chunker.py · 500–800 tokens, 100 overlap</div>
+    </div>
+    <div class="node node-teal" onclick="show('embedder')">
+      <div class="node-title"><span class="dot"></span>Embedder</div>
+      <div class="node-sub">ingestion/embedder.py · sentence-transformers dim=384</div>
+    </div>
+    <div class="node node-teal" onclick="show('chromadb')">
+      <div class="node-title"><span class="dot"></span>ChromaDB</div>
+      <div class="node-sub">vector store · local, in-memory</div>
+    </div>
+
+    <div class="connector">↓</div>
+
+    <div class="section-label">Retrieval layer</div>
+
+    <div class="node node-blue" onclick="show('hybrid')">
+      <div class="node-title"><span class="dot"></span>Hybrid search</div>
+      <div class="node-sub">retrieval/hybrid_search.py · BM25 + vector, RRF fusion</div>
+    </div>
+    <div class="node node-blue" onclick="show('reranker')">
+      <div class="node-title"><span class="dot"></span>Cross-encoder reranker</div>
+      <div class="node-sub">retrieval/reranker.py · ms-marco-MiniLM-L-6-v2</div>
+    </div>
+    <div class="node node-blue" onclick="show('citguard')">
+      <div class="node-title"><span class="dot"></span>Citation guard</div>
+      <div class="node-sub">retrieval/citation_guard.py · NLI entailment check</div>
+    </div>
+
+    <div class="connector">↓</div>
+
+    <div class="section-label">Generation layer</div>
+
+    <div class="node node-purple" onclick="show('generator')">
+      <div class="node-title"><span class="dot"></span>Generator</div>
+      <div class="node-sub">generation/generator.py · claude-sonnet-4-6</div>
+    </div>
+    <div class="node node-purple" onclick="show('prompts')">
+      <div class="node-title"><span class="dot"></span>Prompt store</div>
+      <div class="node-sub">generation/prompts.yaml · versioned alongside code</div>
+    </div>
+
+    <div class="connector">↓</div>
+
+    <div class="section-label">Observability</div>
+
+    <div class="node node-amber" onclick="show('langfuse')">
+      <div class="node-title"><span class="dot"></span>LangFuse tracer</div>
+      <div class="node-sub">observability/tracer.py · every step traced</div>
+    </div>
+    <div class="node node-amber" onclick="show('metrics')">
+      <div class="node-title"><span class="dot"></span>Metrics collector</div>
+      <div class="node-sub">observability/metrics.py · P50/P95, cost, coverage</div>
+    </div>
+
+    <div class="connector">↓</div>
+
+    <div class="section-label">Quality protection layers</div>
+
+    <div class="quality-row">
+      <div class="quality-node node-blue" style="--active-color:var(--teal);--active-bg:var(--teal-bg)" onclick="show('q-citguard')">
+        <div class="q-label">Runtime</div>
+        <div class="q-title">Citation guard</div>
+        <div class="q-sub">per answer</div>
+      </div>
+      <div class="quality-node" style="--active-color:var(--purple);--active-bg:var(--purple-bg)" onclick="show('q-faith')">
+        <div class="q-label">Eval time</div>
+        <div class="q-title">Faithfulness score</div>
+        <div class="q-sub">per dataset run</div>
+      </div>
+      <div class="quality-node" style="--active-color:var(--amber);--active-bg:var(--amber-bg)" onclick="show('q-ci')">
+        <div class="q-label">Deploy time</div>
+        <div class="q-title">CI gate</div>
+        <div class="q-sub">every git push</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Detail panel -->
+  <div class="detail-panel" id="detail">
+    <div class="empty-state">
+      <span class="arrow">←</span>
+      <p>click any component<br>to see details</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>shekhar-muni/rag-production · May 2026</span>
+  <span>built with Claude Code v2.1.154</span>
+</footer>
+
+<script>
+const data = {
+  docs: {
+    tag: "Input", color: "var(--text2)", title: "Your documents",
+    body: `<p>The system accepts <strong>PDFs</strong>, <strong>Markdown files</strong>, and <strong>web pages</strong> via URL. The demo corpus is a file called rag_overview.md that Claude Code generated as a sample.</p><p>In a real deployment you replace this with your own domain-specific documents — technical docs, contracts, internal wikis, research papers. The more specific the domain, the more impressive the demo.</p><p>To load new documents: point the loader at your files and run the ingestion pipeline. Everything downstream (chunking, embedding, indexing) happens automatically.</p>`
+  },
+  chunker: {
+    tag: "Ingestion", color: "var(--teal)", title: "Chunker",
+    body: `<p>Splits documents into overlapping chunks of <strong>500–800 tokens</strong> with <strong>100-token overlap</strong> between consecutive chunks.</p><p>The overlap prevents important sentences from being severed at a boundary. Without overlap, a key sentence split across two chunks would be lost from both.</p><p>These parameters are tunable — changing chunk size changes the precision vs. context trade-off. Smaller chunks = more precise retrieval but less context per chunk. Larger chunks = more context but lower precision.</p>`
+  },
+  embedder: {
+    tag: "Ingestion", color: "var(--teal)", title: "Embedder",
+    body: `<p>Converts each text chunk into a <strong>384-dimensional numerical vector</strong> using the all-MiniLM-L6-v2 model from sentence-transformers (Hugging Face).</p><p>Similar meaning = similar vectors = close together in vector space. This is what enables semantic search — finding documents that mean the same thing even when they use different words.</p><p>Runs entirely on your Mac CPU. No API calls needed for embedding — it's a free local model.</p>`
+  },
+  chromadb: {
+    tag: "Ingestion", color: "var(--teal)", title: "ChromaDB",
+    body: `<p>A <strong>vector database</strong> that stores the numerical embeddings of every chunk alongside their original text and metadata (source file, chunk ID).</p><p>Runs in memory locally on your Mac — no server, no cloud, no cost. Data persists to a local folder between runs.</p><p>When a query comes in, ChromaDB performs approximate nearest-neighbor search to find the chunks whose embeddings are closest to the query embedding.</p>`
+  },
+  hybrid: {
+    tag: "Retrieval", color: "var(--blue)", title: "Hybrid search",
+    body: `<p>Combines two search methods simultaneously: <strong>BM25</strong> (keyword matching, like a search engine) and <strong>vector search</strong> (semantic meaning).</p><p>The results are merged using <strong>Reciprocal Rank Fusion (RRF)</strong> — a rank-based fusion method that doesn't care about the score scales of the two systems. Documents appearing near the top of both lists get the highest combined scores.</p><p>From the e2e demo: retrieval latency was <strong>157ms</strong> for 5 chunks.</p>
+    <div class="metric"><span class="metric-label">retrieval latency (demo)</span><span class="metric-value">157ms</span></div>
+    <div class="metric"><span class="metric-label">chunks retrieved</span><span class="metric-value">5 candidates</span></div>`
+  },
+  reranker: {
+    tag: "Retrieval", color: "var(--blue)", title: "Cross-encoder reranker",
+    body: `<p>Model: <strong>cross-encoder/ms-marco-MiniLM-L-6-v2</strong> (Microsoft, trained on MS MARCO dataset). Reads the query and each candidate chunk <em>together as a pair</em> and produces a relevance score.</p><p>In the e2e demo, hybrid search ranked the RAG overview chunk #1. The reranker <strong>flipped it</strong> — promoting the BM25/sparse retrieval chunk to #1 with score 4.27 vs -1.42 for the next. It understood the query was specifically about BM25.</p>
+    <div class="metric"><span class="metric-label">reranking latency (demo)</span><span class="metric-value">1.2s</span></div>
+    <div class="metric"><span class="metric-label">top chunk score</span><span class="metric-value">4.27</span></div>`
+  },
+  citguard: {
+    tag: "Retrieval", color: "var(--blue)", title: "Citation guard",
+    body: `<p>Uses an <strong>NLI (Natural Language Inference)</strong> model to check entailment — does the retrieved evidence actually support the answer?</p><p>If the answer is not grounded in the retrieved chunks, the system <strong>explicitly declines</strong> rather than returning a hallucinated response. This is the production discipline that separates a trustworthy system from a demo.</p><p>Three decline paths: no chunks retrieved (pre-LLM), answer not grounded (post-LLM), or NLI entailment score too low.</p>`
+  },
+  generator: {
+    tag: "Generation", color: "var(--purple)", title: "Generator",
+    body: `<p>Sends the top 3 re-ranked chunks to <strong>claude-sonnet-4-6</strong> via the Anthropic API with a prompt that requires every claim to be cited with its source chunk ID.</p><p>Three-stage pipeline: immediate decline if no chunks, LLM call with citation-grounded prompt, post-LLM citation guard check.</p>
+    <div class="metric"><span class="metric-label">generation latency (demo)</span><span class="metric-value">6.1s</span></div>
+    <div class="metric"><span class="metric-label">cost per query (demo)</span><span class="metric-value">$0.008</span></div>
+    <div class="metric"><span class="metric-label">citation coverage</span><span class="metric-value">100%</span></div>`
+  },
+  prompts: {
+    tag: "Generation", color: "var(--purple)", title: "Prompt store",
+    body: `<p>All prompts are stored in <strong>prompts.yaml</strong> — versioned alongside the code in Git, never hardcoded in Python files.</p><p>A prompt change can affect system behavior just as dramatically as a code change. Tracking prompt versions in Git means you can trace quality regressions to specific prompt edits, the same way you'd trace a bug to a specific code commit.</p><p>The GenerationResult object carries a prompt_version field so every LangFuse trace knows which prompt version produced that answer.</p>`
+  },
+  langfuse: {
+    tag: "Observability", color: "var(--amber)", title: "LangFuse tracer",
+    body: `<p>Open-source LLM observability tool. Every pipeline step is decorated with <strong>@observe</strong> — LangFuse automatically creates parent/child trace spans via OpenTelemetry context propagation.</p><p>For every request you can see: which chunks were retrieved, how the reranker reordered them, what prompt was sent to Claude, what the response was, token counts including cache hits.</p><p><strong>Live on LangFuse cloud</strong> at us.cloud.langfuse.com (project: rag-production). Traces are active — full input/output capture, per-stage latency, and cost per query ($0.008) tracked in real time. Activated via LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY, and LANGFUSE_BASE_URL in .env.</p>`
+  },
+  metrics: {
+    tag: "Observability", color: "var(--amber)", title: "Metrics collector",
+    body: `<p>In-process collector using a rolling window of 1,000 requests. Tracks latency at <strong>P50 and P95</strong> (not averages — averages hide tail latency), cost per request, citation coverage percentage, and failure rate.</p><p>From the e2e demo results:</p>
+    <div class="metric"><span class="metric-label">retrieval P50</span><span class="metric-value">157ms</span></div>
+    <div class="metric"><span class="metric-label">reranking P50</span><span class="metric-value">1,205ms</span></div>
+    <div class="metric"><span class="metric-label">generation P50</span><span class="metric-value">6,087ms</span></div>
+    <div class="metric"><span class="metric-label">mean cost/request</span><span class="metric-value">$0.008136</span></div>
+    <div class="metric"><span class="metric-label">citation coverage</span><span class="metric-value">100%</span></div>
+    <div class="metric"><span class="metric-label">failure rate</span><span class="metric-value">0.0%</span></div>`
+  },
+  'q-citguard': {
+    tag: "Quality · Ring 1", color: "var(--teal)", title: "Citation guard (runtime)",
+    body: `<p>The <strong>innermost</strong> quality ring. Runs on every single query at runtime, before the answer reaches the user.</p><p>Uses NLI entailment to verify the generated answer is supported by the retrieved chunks. If it's not grounded, the system declines and returns a fallback message instead of a hallucinated answer.</p><p>This protects users in production — no matter what code changes have been deployed, every answer is checked before it's returned.</p>`
+  },
+  'q-faith': {
+    tag: "Quality · Ring 2", color: "var(--purple)", title: "Faithfulness score (eval time)",
+    body: `<p>The <strong>middle</strong> quality ring. Measures system quality across the golden dataset using Claude Haiku as the judge.</p><p>Algorithm: decompose each answer into atomic claims, then verify each claim against the retrieved context chunks. Score = supported claims ÷ total claims.</p><p>A score of 1.0 = every claim in every answer is grounded in evidence. The threshold for passing the CI gate is <strong>0.8 (80%)</strong>.</p><p>Run manually: <code>uv run --env-file .env python evaluation/eval_runner.py</code></p>`
+  },
+  'q-ci': {
+    tag: "Quality · Ring 3", color: "var(--amber)", title: "CI gate (deploy time)",
+    body: `<p>The <strong>outermost</strong> quality ring. Runs automatically on every git push to the main branch via GitHub Actions.</p><p>If the faithfulness score drops below 0.8, the build fails and the change cannot be merged. This prevents silent quality regressions from reaching production.</p><p>Cost: ~$0.01 per CI run (10 Haiku calls at ~$0.001 each). Your $20 of API credits would last years at typical push frequency.</p><p>Activate: add ANTHROPIC_API_KEY to GitHub → Settings → Secrets and Variables → Actions.</p>`
+  }
+};
+
+let current = null;
+
+function show(id) {
+  // Deactivate all nodes
+  document.querySelectorAll('.node, .quality-node').forEach(n => n.classList.remove('active'));
+
+  // Find and activate clicked node
+  const allNodes = document.querySelectorAll('.node, .quality-node');
+  allNodes.forEach(n => {
+    if (n.getAttribute('onclick') === `show('${id}')`) n.classList.add('active');
+  });
+
+  const d = data[id];
+  if (!d) return;
+
+  document.getElementById('detail').innerHTML = `
+    <div class="detail-header">
+      <div class="detail-tag" style="color:${d.color}">${d.tag}</div>
+      <div class="detail-title">${d.title}</div>
+    </div>
+    <div class="detail-body">${d.body}</div>
+  `;
+}
+</script>
+</body>
+</html>
