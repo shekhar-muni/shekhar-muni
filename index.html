@@ -758,6 +758,39 @@
         </div>
       </div>
 
+      <div class="ai-highlight" style="margin-top:24px;">
+        <div class="ai-badge">🔬</div>
+        <div>
+          <div class="ai-highlight-title">Production RAG System &mdash; Hybrid Retrieval, LLMOps &amp; CI/CD Evaluation Gate</div>
+          <div class="ai-highlight-text">
+            <strong>What I built:</strong> A production-grade Retrieval-Augmented Generation (RAG) system designed to demonstrate the engineering discipline that separates production AI from demo AI &mdash; evaluation infrastructure, observability, and a CI/CD gate that blocks regressions.
+            <br/><br/>
+            <strong>Architecture:</strong> Hybrid retrieval combining BM25 sparse search and dense vector search (sentence-transformers + ChromaDB) with cross-encoder reranking. A citation enforcement layer declines to answer rather than hallucinate when retrieved evidence doesn&rsquo;t support a response. All prompts version-controlled in YAML &mdash; never hardcoded.
+            <br/><br/>
+            <strong>Observability:</strong> Every pipeline stage traced through LangFuse cloud &mdash; retrieval, reranking, generation, token counts, cost per query ($0.008), and full input/output capture. P50/P95 latency tracked per stage.
+            <br/><br/>
+            <strong>Evaluation &amp; CI/CD:</strong> RAGAS faithfulness scoring against a 10-sample golden dataset. Scored 1.0 faithfulness &mdash; every claim grounded in retrieved context. CI/CD gate wired into GitHub Actions: build fails if faithfulness drops below 0.8. Prevents regressions from reaching production.
+            <br/><br/>
+            <strong>Why it matters:</strong> Most AI portfolio projects stop at &ldquo;it works.&rdquo; This one asks: how do you know it&rsquo;s still working next week? The answer is a faithfulness gate, an observability stack, and a CI/CD pipeline that treats LLM quality like any other production SLA.
+          </div>
+          <div class="tag-list">
+            <span class="tag purple">RAG Architecture</span>
+            <span class="tag purple">Hybrid Retrieval (BM25 + Vector)</span>
+            <span class="tag purple">LangFuse Observability</span>
+            <span class="tag purple">RAGAS Evaluation</span>
+            <span class="tag purple">CI/CD LLM Quality Gate</span>
+            <span class="tag purple">ChromaDB</span>
+            <span class="tag purple">Python &middot; uv</span>
+            <span class="tag purple">GitHub Actions</span>
+          </div>
+          <div style="margin-top:16px;">
+            <a href="https://github.com/shekhar-muni/rag-production" target="_blank" style="display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">
+              &#11088; View on GitHub &rarr;
+            </a>
+          </div>
+        </div>
+      </div>
+
       <div class="cards" style="margin-top:24px;">
 
         <div class="card">
